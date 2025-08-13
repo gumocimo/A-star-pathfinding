@@ -1,0 +1,4 @@
+# Optional dependencies for visualization
+# Core algorithm works without these, but matplotlib visualization requires them
+matplotlib>=3.5.0
+numpy>=1.21.0
