@@ -2,35 +2,37 @@
 """
 A* Pathfinding Algorithm - Main Entry Point
 
-Implementation of the A* pathfinding algorithm with random maze generation
-and matplotlib visualization showing the solution, explored areas, and performance statistics.
+Implementation of the A* pathfinding algorithm with animated visualization
+showing the algorithm's exploration process in real-time.
 
 Usage:
     python main.py [options]
 
 Options:
-    --width WIDTH       Grid width (default: 25, should be odd)
-    --height HEIGHT     Grid height (default: 15, should be odd)
+    --width WIDTH       Grid width (default: 45, should be odd)
+    --height HEIGHT     Grid height (default: 27, should be odd)
     --no-visualize      Disable console visualization
     --no-plot           Disable matplotlib plot
-    --save-plot PATH    Save plot to file instead of displaying
+    --static            Use static plot instead of animated
+    --save-plot PATH    Save plot to file (png for static, gif/mp4 for animated)
+    --interval MS       Animation interval in milliseconds (default: 50)
     --mode {2d,3d}      Choose between 2D and 3D mode (default: 2d)
     --seed SEED         Random seed for maze generation
     --sample-maze       Use the sample maze instead of generating random
     --random-paths PCT  Percentage of random paths to add (0.0-1.0)
 
 Author: gumocimo
-Date: 13/08/2025
+Date: 14/08/2025
 """
 
 import argparse
 import random
 import sys
-from core import AStar, MazeGenerator, ConsoleVisualizer, MatplotlibVisualizer
+from src import AStar, MazeGenerator, ConsoleVisualizer, MatplotlibVisualizer
 
 # Configuration settings
-DEFAULT_WIDTH = 25
-DEFAULT_HEIGHT = 15
+DEFAULT_WIDTH = 45
+DEFAULT_HEIGHT = 27
 DEFAULT_DEPTH = 8 # For 3D mode - NOT IMPLEMENTED YET
 
 # Maze generation settings
@@ -47,6 +49,8 @@ DEFAULT_GOAL_3D = None # Will be set to (depth-1, height-1, width-1) if None
 SHOW_VISUALIZATION = True
 SHOW_PLOT = True # Show matplotlib plot if available
 PLOT_SAVE_PATH = None # Set to filename to save plot instead of showing
+ANIMATE_PLOT = True # Show animated visualization by default
+ANIMATION_INTERVAL = 50 # Milliseconds between frames (50ms = 20fps)
 
 
 def parse_arguments():
@@ -71,8 +75,16 @@ def parse_arguments():
         help='Disable matplotlib plot'
     )
     parser.add_argument(
+        '--static', action='store_true',
+        help='Use static plot instead of animated'
+    )
+    parser.add_argument(
         '--save-plot', type=str, default=PLOT_SAVE_PATH,
-        help='Save plot to file instead of displaying'
+        help='Save plot to file (png for static, gif/mp4 for animated)'
+    )
+    parser.add_argument(
+        '--interval', type=int, default=ANIMATION_INTERVAL,
+        help='Animation interval in milliseconds'
     )
     parser.add_argument(
         '--mode', choices=['2d', '3d'], default='2d',
@@ -103,7 +115,7 @@ def main():
         random.seed(args.seed)
         print(f"Using random seed: {args.seed}")
 
-    # Only 2D maze generation is supported at the moment
+    # Only 2D visualization is supported
     if args.mode == '3d':
         print("3D visualization not yet implemented. Using 2D mode.")
         args.mode = '2d'
@@ -179,7 +191,6 @@ def main():
     # Matplotlib visualization
     if not args.no_plot and SHOW_PLOT:
         if MatplotlibVisualizer.is_available():
-            print("\nGenerating visualization plot...")
             stats = {
                 'path_length': path_length,
                 'nodes_explored': nodes_explored,
@@ -187,10 +198,20 @@ def main():
                 'max_frontier': max_frontier,
                 'efficiency': efficiency
             }
-            MatplotlibVisualizer.plot_solution(
-                grid, path, explored_nodes, start, goal, stats,
-                save_path=args.save_plot
-            )
+
+            if args.static:
+                print("\nGenerating static visualization plot...")
+                MatplotlibVisualizer.plot_solution(
+                    grid, path, explored_nodes, start, goal, stats,
+                    save_path=args.save_plot
+                )
+            else:
+                print("\nGenerating animated visualization...")
+                print(f"Animation speed: {args.interval}ms per frame")
+                MatplotlibVisualizer.plot_solution_animated(
+                    grid, path, explored_nodes, start, goal, stats,
+                    interval=args.interval, save_path=args.save_plot
+                )
         else:
             print("\nMatplotlib not available. Install with: pip install matplotlib numpy")
 
